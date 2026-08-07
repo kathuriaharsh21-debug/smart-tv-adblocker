@@ -9,6 +9,7 @@ app.use(express.json());
 
 // System state (In-memory default)
 let currentMode = 'Auto'; // Auto, Strict, Paused
+let ssaiMode = 'Strict-SSAI'; // Enabled Layer 4 SNI SSAI Filter
 let modeLastUpdated = new Date().toISOString();
 
 // 1. Unauthenticated Reachability Probe (Mobile App Auto-Detection)
@@ -26,9 +27,17 @@ app.get('/api/ping', (req, res) => {
 app.get('/api/mode', (req, res) => {
   res.json({
     mode: currentMode,
+    ssai_mode: ssaiMode,
     last_updated: modeLastUpdated,
     active_profile: currentMode === 'Strict' ? 'Strict-SmartTV' : currentMode === 'Paused' ? 'Bypass' : 'Standard-SmartTV'
   });
+});
+
+app.post('/api/mode/ssai', (req, res) => {
+  const { ssai_enabled, buffer_tolerance_sec } = req.body;
+  ssaiMode = ssai_enabled ? 'Strict-SSAI' : 'Standard';
+  console.log(`[API-Gateway] Layer 4 SSAI Engine updated: ${ssaiMode} (Buffer Tolerance: ${buffer_tolerance_sec || 5}s)`);
+  res.json({ success: true, ssai_mode: ssaiMode, buffer_tolerance_sec: buffer_tolerance_sec || 5 });
 });
 
 app.post('/api/mode', (req, res) => {
