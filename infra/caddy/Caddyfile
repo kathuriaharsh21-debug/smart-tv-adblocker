@@ -1,0 +1,19 @@
+adblock.home.lan {
+    tls internal
+
+    # Frontend Dashboard
+    handle /* {
+        reverse_proxy localhost:3000
+    }
+
+    # API Gateway
+    handle /api/* {
+        reverse_proxy localhost:8080
+    }
+
+    # AdGuard Home Control Panel
+    handle /adguard/* {
+        uri strip_prefix /adguard
+        reverse_proxy localhost:3000
+    }
+}
