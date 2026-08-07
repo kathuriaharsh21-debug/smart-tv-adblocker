@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart-TV Ad Blocker — Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #090d16 0%, #0f172a 50%, #1e1b4b 100%);
+      --card-bg: rgba(30, 41, 59, 0.65);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --accent: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Outfit', sans-serif; }
+
+    body {
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-logo { font-size: 24px; }
+    .brand-title { font-size: 20px; font-weight: 700; background: linear-gradient(90deg, #818cf8, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .nav-tabs { display: flex; gap: 8px; background: rgba(0, 0, 0, 0.3); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); }
+    .tab-btn {
+      padding: 8px 18px; border: none; background: transparent; color: var(--text-muted);
+      border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn.active, .tab-btn:hover { background: rgba(99, 102, 241, 0.2); color: #ffffff; }
+    .tab-btn.active { border: 1px solid rgba(129, 140, 248, 0.4); }
+
+    .status-pill {
+      display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+      background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.4);
+      border-radius: 20px; font-size: 13px; color: #34d399; font-weight: 600;
+    }
+    .status-dot { width: 8px; height: 8px; background: #34d399; border-radius: 50%; box-shadow: 0 0 10px #34d399; }
+
+    /* Main Layout */
+    main { flex: 1; padding: 28px 32px; max-width: 1440px; margin: 0 auto; width: 100%; }
+
+    /* Disclaimer Alert */
+    .disclaimer-banner {
+      background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: 12px; padding: 14px 20px; margin-bottom: 24px; display: flex; align-items: center; gap: 14px;
+    }
+    .disclaimer-icon { font-size: 20px; }
+    .disclaimer-text { font-size: 13.5px; color: #fcd34d; line-height: 1.5; }
+
+    /* Grid layout */
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 24px; }
+    .metric-card {
+      background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 8px;
+    }
+    .metric-label { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+    .metric-value { font-size: 28px; font-weight: 700; color: #ffffff; }
+    .metric-sub { font-size: 12px; color: var(--accent); }
+
+    /* Charts & Section Cards */
+    .dashboard-row { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; margin-bottom: 24px; }
+    .card {
+      background: var(--card-bg); backdrop-filter: blur(12px); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 24px; margin-bottom: 24px;
+    }
+    .card-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th { text-align: left; padding: 12px; font-size: 13px; color: var(--text-muted); border-bottom: 1px solid var(--card-border); }
+    td { padding: 12px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    tr:hover { background: rgba(255,255,255,0.02); }
+
+    /* Buttons & Badges */
+    .btn {
+      padding: 8px 16px; border: none; border-radius: 8px; font-weight: 600; font-size: 13px;
+      cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary { background: var(--primary); color: #ffffff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-accent { background: var(--accent); color: #ffffff; }
+    .btn-accent:hover { filter: brightness(1.1); }
+    .btn-danger { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .btn-danger:hover { background: rgba(239, 68, 68, 0.3); }
+
+    .tag { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block; }
+    .tag-samsung { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+    .tag-lg { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .tag-roku { background: rgba(236, 72, 153, 0.2); color: #f9a8d4; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .tag-firetv { background: rgba(245, 158, 11, 0.2); color: #fde047; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    /* Live Ticker Code */
+    .ticker-list { display: flex; flex-direction: column; gap: 8px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; }
+    .ticker-item { padding: 8px 12px; background: rgba(0,0,0,0.25); border-radius: 6px; display: flex; justify-content: space-between; }
+    .ticker-blocked { color: #fca5a5; border-left: 3px solid var(--danger); }
+    .ticker-allowed { color: #6ee7b7; border-left: 3px solid var(--accent); }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <div class="brand-logo">🛡️</div>
+      <div>
+        <div class="brand-title">Smart-TV Ad Blocker</div>
+        <div style="font-size: 11px; color: var(--text-muted)">Network-Wide JioFiber Appliance</div>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="tab-btn active" onclick="showTab('dashboard')">📊 Live Stats</button>
+      <button class="tab-btn" onclick="showTab('devices')">📺 Smart TVs</button>
+      <button class="tab-btn" onclick="showTab('unbreak')">⚡ App Broke (Whitelist)</button>
+      <button class="tab-btn" onclick="showTab('lists')">📑 Blocklists</button>
+      <button class="tab-btn" onclick="showTab('wizard')">🔧 Router Setup</button>
+    </div>
+
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span id="global-mode-display">Mode: Auto</span>
+    </div>
+  </header>
+
+  <main>
+    <!-- SSAI Limitation Reality Check Banner -->
+    <div class="disclaimer-banner">
+      <div class="disclaimer-icon">⚠️</div>
+      <div class="disclaimer-text">
+        <strong>Network-Wide Ad Blocker Scope:</strong> Interface banners, promo tiles, ACR telemetry tracking, and pre-roll ad servers are blocked. Note: Server-Side Ad Insertion (SSAI) on YouTube, Hotstar, or SonyLIV live sports streams spliced into main video content cannot be stripped without breaking playback.
+      </div>
+    </div>
+
+    <!-- TAB 1: DASHBOARD -->
+    <section id="tab-dashboard">
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-label">Live Query Speed</div>
+          <div class="metric-value" id="val-qps">14.2 req/s</div>
+          <div class="metric-sub">⚡ Real-time query rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Ads Blocked Today</div>
+          <div class="metric-value" id="val-blocked">12,450</div>
+          <div class="metric-sub">🛡️ 25.4% of total queries</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Total DNS Queries</div>
+          <div class="metric-value" id="val-total">48,920</div>
+          <div class="metric-sub">📈 Across 4 Smart TV Subnets</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Active TV Devices</div>
+          <div class="metric-value">4 Devices</div>
+          <div class="metric-sub">🟢 Layer 2 DoH Bypass Protected</div>
+        </div>
+      </div>
+
+      <div class="dashboard-row">
+        <div class="card">
+          <div class="card-title">
+            <span>📈 Query & Ad-Block History</span>
+            <span style="font-size:12px; color: var(--text-muted)">Last 24 Hours</span>
+          </div>
+          <div style="height: 260px;">
+            <canvas id="chart-queries"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🚫 Top Blocked Ad Domains</div>
+          <ul id="top-domains-list" style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+            <li style="display:flex; justify-content:space-between; font-size:13px;">
+              <span>samsungads.com</span>
+              <strong style="color: var(--danger)">3,410</strong>
+            </li>
+            <li style="display:flex; justify-content:space-between; font-size:13px;">
+              <span>p.ads.roku.com</span>
+              <strong style="color: var(--danger)">2,890</strong>
+            </li>
+            <li style="display:flex; justify-content:space-between; font-size:13px;">
+              <span>ad.lgappstv.com</span>
+              <strong style="color: var(--danger)">1,940</strong>
+            </li>
+            <li style="display:flex; justify-content:space-between; font-size:13px;">
+              <span>device-metrics-us.amazon.com</span>
+              <strong style="color: var(--danger)">1,520</strong>
+            </li>
+            <li style="display:flex; justify-content:space-between; font-size:13px;">
+              <span>cloudservices.roku.com</span>
+              <strong style="color: var(--danger)">980</strong>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📡 Real-Time Smart TV Query Stream</div>
+        <div class="ticker-list" id="query-ticker">
+          <div class="ticker-item ticker-blocked">
+            <span>[BLOCKED] samsungads.com</span>
+            <span>Living Room Samsung TV (192.168.30.10) • Just Now</span>
+          </div>
+          <div class="ticker-item ticker-allowed">
+            <span>[PASS] api.netflix.com</span>
+            <span>Bedroom LG WebOS TV (192.168.30.12) • 2s ago</span>
+          </div>
+          <div class="ticker-item ticker-blocked">
+            <span>[BLOCKED] p.ads.roku.com</span>
+            <span>Kids Room Roku Express (192.168.30.15) • 5s ago</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: SMART TV DEVICES -->
+    <section id="tab-devices" class="hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>📺 Connected Smart TV Devices</span>
+          <button class="btn btn-primary" onclick="alert('Scanning LAN for new DHCP leases...')">🔍 Discover Devices</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Device Name</th>
+              <th>Platform / Vendor</th>
+              <th>IP Address</th>
+              <th>Active Blocklist Profile</th>
+              <th>Ads Blocked Today</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Living Room TV</strong></td>
+              <td><span class="tag tag-samsung">Samsung Smart TV</span></td>
+              <td>192.168.30.10</td>
+              <td>HaGeZi Native Samsung + Perflyst</td>
+              <td>1,420</td>
+              <td><button class="btn btn-primary" onclick="alert('Editing Samsung Profile')">Edit Profile</button></td>
+            </tr>
+            <tr>
+              <td><strong>Bedroom TV</strong></td>
+              <td><span class="tag tag-lg">LG WebOS TV</span></td>
+              <td>192.168.30.12</td>
+              <td>HaGeZi Native LG + SmartTV AGH</td>
+              <td>890</td>
+              <td><button class="btn btn-primary" onclick="alert('Editing LG Profile')">Edit Profile</button></td>
+            </tr>
+            <tr>
+              <td><strong>Kids Room Roku</strong></td>
+              <td><span class="tag tag-roku">Roku Express</span></td>
+              <td>192.168.30.15</td>
+              <td>Roku Strict + ACR Telemetry</td>
+              <td>2,150</td>
+              <td><button class="btn btn-primary" onclick="alert('Editing Roku Profile')">Edit Profile</button></td>
+            </tr>
+            <tr>
+              <td><strong>Guest Room Fire TV</strong></td>
+              <td><span class="tag tag-firetv">Amazon Fire TV</span></td>
+              <td>192.168.30.20</td>
+              <td>Amazon Metrics Blocklist</td>
+              <td>340</td>
+              <td><button class="btn btn-primary" onclick="alert('Editing Fire TV Profile')">Edit Profile</button></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 3: APP BROKE / WHITELIST WORKFLOW -->
+    <section id="tab-unbreak" class="hidden">
+      <div class="card">
+        <div class="card-title">⚡ One-Click "An App Just Broke" Whitelist Candidates</div>
+        <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px;">
+          If a Smart TV app fails to load thumbnails, weather widgets, or app-store logins, the backend automatically flags recently blocked domains below. Click <strong>Un-break & Allow</strong> to instantly add a domain to your AdGuard Home whitelist.
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px;" id="whitelist-candidates">
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 15px; font-weight: 600; color: #ffffff;">image.tmdb.org</div>
+              <div style="font-size: 12.5px; color: var(--text-muted)">Living Room Samsung TV • App Thumbnails • Blocked 5m ago</div>
+            </div>
+            <button class="btn btn-accent" onclick="allowDomain(this, 'image.tmdb.org')">✅ Un-break & Allow</button>
+          </div>
+
+          <div style="background: rgba(0,0,0,0.25); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 15px; font-weight: 600; color: #ffffff;">weather.vizio.com</div>
+              <div style="font-size: 12.5px; color: var(--text-muted)">Guest Room Fire TV • Weather Widget • Blocked 15m ago</div>
+            </div>
+            <button class="btn btn-accent" onclick="allowDomain(this, 'weather.vizio.com')">✅ Un-break & Allow</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: BLOCKLISTS -->
+    <section id="tab-lists" class="hidden">
+      <div class="card">
+        <div class="card-title">
+          <span>📑 Smart TV Curated Blocklists</span>
+          <button class="btn btn-accent" onclick="alert('Syncing latest HaGeZi & Perflyst blocklists...')">🔄 Sync Now</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>List Name</th>
+              <th>Target Platform</th>
+              <th>Domains Blocked</th>
+              <th>Last Refreshed</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>HaGeZi Native Samsung</strong></td>
+              <td>Samsung TV ACR / Ads</td>
+              <td>18,400</td>
+              <td>2 hours ago</td>
+              <td><span class="tag" style="background:rgba(16,185,129,0.2); color:#6ee7b7">Active</span></td>
+            </tr>
+            <tr>
+              <td><strong>HaGeZi Native LG</strong></td>
+              <td>LG WebOS Telemetry</td>
+              <td>14,200</td>
+              <td>2 hours ago</td>
+              <td><span class="tag" style="background:rgba(16,185,129,0.2); color:#6ee7b7">Active</span></td>
+            </tr>
+            <tr>
+              <td><strong>HaGeZi Native Roku</strong></td>
+              <td>Roku Ad Servers</td>
+              <td>22,100</td>
+              <td>2 hours ago</td>
+              <td><span class="tag" style="background:rgba(16,185,129,0.2); color:#6ee7b7">Active</span></td>
+            </tr>
+            <tr>
+              <td><strong>Perflyst SmartTV AGH</strong></td>
+              <td>All Smart TV OS</td>
+              <td>36,400</td>
+              <td>2 hours ago</td>
+              <td><span class="tag" style="background:rgba(16,185,129,0.2); color:#6ee7b7">Active</span></td>
+            </tr>
+            <tr>
+              <td><strong>Block List Project SmartTV</strong></td>
+              <td>Samsung / LG / Roku</td>
+              <td>51,480</td>
+              <td>2 hours ago</td>
+              <td><span class="tag" style="background:rgba(16,185,129,0.2); color:#6ee7b7">Active</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- TAB 5: ROUTER WIZARD -->
+    <section id="tab-wizard" class="hidden">
+      <div class="card">
+        <div class="card-title">🔧 JioFiber + Downstream Router Setup Topology</div>
+        <p style="font-size: 13.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 16px;">
+          Because JioFiber home routers (192.168.29.1) run locked firmware without custom DNS fields, connect an OpenWrt-native travel router (e.g. GL.iNet GL-MT3000 Beryl AX) downstream in Router Mode (`192.168.30.1`).
+        </p>
+
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; margin-bottom: 16px;">
+          <h4 style="color: #ffffff; margin-bottom: 8px;">Network Architecture Diagram</h4>
+          <pre style="font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #a5b4fc; overflow-x: auto;">
+Internet ──> JioFiber Router (192.168.29.1, untouched)
+                  │ (LAN port -> WAN port)
+                  ▼
+            OpenWrt Router (192.168.30.1, double-NAT)
+                  │
+                  ├──> AdGuard Home + Unbound (192.168.30.2)
+                  └──> Smart TVs (Samsung, LG, Roku, Fire TV)
+          </pre>
+        </div>
+
+        <h4 style="color: #ffffff; margin-bottom: 8px;">Layer 2 Encrypted-DNS Bypass Prevention Commands (OpenWrt SSH)</h4>
+        <pre style="font-family: 'JetBrains Mono', monospace; font-size: 12px; background: rgba(0,0,0,0.4); padding: 14px; border-radius: 8px; color: #34d399; overflow-x: auto;">
+# 1. Force outbound port 53 DNS to AdGuard Home
+uci add firewall redirect
+uci set firewall.@redirect[-1].name='Force-AdGuard-DNS'
+uci set firewall.@redirect[-1].src='lan'
+uci set firewall.@redirect[-1].src_dport='53'
+uci set firewall.@redirect[-1].dest_ip='192.168.30.2'
+uci set firewall.@redirect[-1].dest_port='53'
+uci set firewall.@redirect[-1].proto='udp'
+uci set firewall.@redirect[-1].target='DNAT'
+
+# 2. Block outbound DoT (853) & DoH (443 to Google/Cloudflare IPs)
+uci add firewall rule
+uci set firewall.@rule[-1].name='Block-DoT-Port853'
+uci set firewall.@rule[-1].src='lan'
+uci set firewall.@rule[-1].dest='wan'
+uci set firewall.@rule[-1].dest_port='853'
+uci set firewall.@rule[-1].proto='tcp udp'
+uci set firewall.@rule[-1].target='DROP'
+
+uci commit firewall
+/etc/init.d/firewall restart
+        </pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    function showTab(tabName) {
+      document.querySelectorAll('section').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tabName).classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    function allowDomain(btn, domain) {
+      btn.parentElement.style.opacity = '0.5';
+      btn.innerHTML = '✅ Whitelisted!';
+      btn.disabled = true;
+      alert(`Domain ${domain} un-blocked and added to AdGuard whitelist.`);
+    }
+
+    // Render Query Chart
+    const ctx = document.getElementById('chart-queries').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', 'Now'],
+        datasets: [
+          {
+            label: 'Total DNS Queries',
+            data: [1200, 400, 3100, 5400, 6800, 9200, 8400],
+            borderColor: '#818cf8',
+            backgroundColor: 'rgba(129, 140, 248, 0.1)',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: 'Ads & Telemetry Blocked',
+            data: [280, 90, 820, 1410, 1780, 2450, 2130],
+            borderColor: '#ef4444',
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            fill: true,
+            tension: 0.4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#94a3b8' } } },
+        scales: {
+          x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } }
+        }
+      }
+    });
+
+    // Simulate Live Stats Ticker updates
+    setInterval(() => {
+      const qps = (13 + Math.random() * 3).toFixed(1);
+      document.getElementById('val-qps').innerText = qps + ' req/s';
+    }, 3000);
+  </script>
+</body>
+</html>
