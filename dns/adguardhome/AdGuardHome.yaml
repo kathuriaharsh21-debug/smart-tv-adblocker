@@ -1,0 +1,28 @@
+http:
+  address: 0.0.0.0:3000
+users:
+  - name: admin
+    password: "$2a$10$w1...hash..."
+dns:
+  bind_hosts:
+    - 0.0.0.0
+  port: 53
+  upstream_dns:
+    - "172.28.0.3:5335" # Unbound container
+  fallback_dns:
+    - "1.1.1.1"
+    - "8.8.8.8"
+  bootstrap_dns:
+    - "9.9.9.9"
+  ratelimit: 300
+  blocking_mode: default
+  filtering_enabled: true
+  querylog_enabled: true
+  querylog_file_enabled: true
+  querylog_interval: 2160h
+  protection_enabled: true
+filtering:
+  protection_enabled: true
+  filtering_enabled: true
+  parental_enabled: false
+  safe_search_enabled: false
