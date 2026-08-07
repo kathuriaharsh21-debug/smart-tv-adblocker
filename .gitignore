@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+*.log
+dns/adguardhome/work/
+dns/adguardhome/conf/AdGuardHome.yaml.bak
+.env
+dist/
+build/
