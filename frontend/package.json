@@ -1,0 +1,12 @@
+{
+  "name": "smarttv-adblocker-frontend",
+  "version": "1.0.0",
+  "description": "Smart-TV Ad Blocker Glassmorphism Dashboard",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
