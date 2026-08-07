@@ -1,0 +1,13 @@
+# Samsung Smart TV Ads & ACR Telemetry Blocklist
+||samsungads.com^
+||samsungacr.com^
+||samsungcloud.com^
+||log-ingestion.samsungcloud.com^
+||log-config.samsungcloud.com^
+||lcprd1.samsungcloudsolution.net^
+||tvx.samsungcloudsolution.com^
+||notice.samsungcloudsolution.com^
+||oempprd.samsungcloudsolution.com^
+||d179kw0l1df1sq.cloudfront.net^
+||gvt1.com^
+||ad-service.samsung.com^
