@@ -1,0 +1,23 @@
+# Hotstar & SonyLIV SSAI (Server-Side Ad Insertion) Layer 4 SNI Filter Rules
+# These ad-delivery subdomains are isolated at the TLS ClientHello SNI layer.
+
+# Disney+ Hotstar SSAI & Ad Injection Subdomains
+||ad-akamaized.net^
+||hotstar-ads-*.akamaized.net^
+||ssai-ads.hotstar.com^
+||ads.hotstar.com^
+||analytics.hotstar.com^
+||click-ad.hotstar.com^
+
+# SonyLIV & ZEE5 SSAI Subdomains
+||dai-sonyliv.com^
+||ssai-vizio.sonyliv.com^
+||ads.sonyliv.com^
+||ad-delivery.sonyliv.com^
+||zee5-ssai-ads.akamaized.net^
+
+# Google DoubleClick & Public SSAI Routers
+||pubads.g.doubleclick.net^
+||securepubads.g.doubleclick.net^
+||media-router.gvt1.com^
+||video-ad-stats.googlesyndication.com^
