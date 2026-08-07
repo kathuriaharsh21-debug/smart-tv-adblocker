@@ -1,0 +1,153 @@
+version: '3.8'
+
+services:
+  # Layer 1 Core Sinkhole Engine
+  dns-engine:
+    image: adguard/adguardhome:v0.107.43
+    container_name: smarttv-dns-engine
+    restart: unless-stopped
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "3000:3000/tcp" # AdGuard UI / API
+    volumes:
+      - ./dns/adguardhome/work:/opt/adguardhome/work
+      - ./dns/adguardhome/conf:/opt/adguardhome/conf
+      - ./blocklists:/opt/adguardhome/blocklists
+    depends_on:
+      - resolver
+    networks:
+      adblock_net:
+        ipv4_address: 172.28.0.2
+
+  # Recursive Upstream Resolver (Layer 1)
+  resolver:
+    image: mvance/unbound:v1.19.0
+    container_name: smarttv-unbound-resolver
+    restart: unless-stopped
+    ports:
+      - "5335:5335/tcp"
+      - "5335:5335/udp"
+    volumes:
+      - ./dns/unbound/unbound.conf:/opt/unbound/etc/unbound/unbound.conf:ro
+    networks:
+      adblock_net:
+        ipv4_address: 172.28.0.3
+
+  # API Gateway & Mobile mDNS Reachability Server
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+    container_name: smarttv-api-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - NODE_ENV=production
+      - ADGUARD_HOST=http://dns-engine:3000
+      - ORCHESTRATOR_URL=http://orchestrator-api:8081
+      - JWT_SECRET=smarttv_adblocker_secret_key_2026
+    depends_on:
+      - dns-engine
+      - orchestrator-api
+    networks:
+      - adblock_net
+
+  # Core Business Logic & AdGuard API Integration
+  orchestrator-api:
+    build:
+      context: ./services/orchestrator-api
+    container_name: smarttv-orchestrator-api
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - PORT=8081
+      - ADGUARD_API_URL=http://dns-engine:3000/control
+      - ADGUARD_USER=admin
+      - ADGUARD_PASS=admin123
+    networks:
+      - adblock_net
+
+  # Automated Blocklist Updater & Aggregator Cron
+  list-updater:
+    build:
+      context: ./services/list-updater
+    container_name: smarttv-list-updater
+    restart: unless-stopped
+    environment:
+      - UPDATE_INTERVAL_HOURS=12
+      - ADGUARD_API_URL=http://dns-engine:3000/control
+      - BLOCKLIST_DIR=/app/blocklists
+    volumes:
+      - ./blocklists:/app/blocklists
+    depends_on:
+      - dns-engine
+    networks:
+      - adblock_net
+
+  # Analytics & Real-Time Query Aggregator
+  stats-service:
+    build:
+      context: ./services/stats-service
+    container_name: smarttv-stats-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      - PORT=8082
+      - ADGUARD_API_URL=http://dns-engine:3000/control
+    networks:
+      - adblock_net
+
+  # Dynamic Firewall Rule Generator (OpenWrt / Linux)
+  firewall-manager:
+    build:
+      context: ./services/firewall-manager
+    container_name: smarttv-firewall-manager
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+    networks:
+      - adblock_net
+
+  # Push Notification Alerts (ntfy integration)
+  notification-service:
+    build:
+      context: ./services/notification-service
+    container_name: smarttv-notification-service
+    restart: unless-stopped
+    environment:
+      - NTFY_SERVER=https://ntfy.sh
+      - NTFY_TOPIC=smarttv_adblocker_alerts
+    networks:
+      - adblock_net
+
+  # Reverse Proxy & SSL (https://adblock.home.lan)
+  caddy:
+    image: caddy:2.7.6-alpine
+    container_name: smarttv-caddy-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - adblock_net
+
+networks:
+  adblock_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  caddy_data:
+  caddy_config:
